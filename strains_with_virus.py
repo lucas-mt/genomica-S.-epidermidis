@@ -1,112 +1,95 @@
-import pandas as pd
+"""
+#na linha de comando
+python3 strains_with_virus <arq>.fasta
+"""
+
 import argparse
 from pathlib import Path
+from collections import Counter
 
 
-def normalizar(valor):
-    """Normaliza textos para facilitar a correspondência."""
-    if pd.isna(valor):
-        return None
+def contar_accessions(caminho_fasta):
 
-    return str(valor).strip()
+    caminho_fasta = Path(caminho_fasta)
 
-
-def processar_planilha(caminho):
-    caminho = Path(caminho)
-
-    if not caminho.exists():
+    if not caminho_fasta.exists():
         raise FileNotFoundError(
-            f"Arquivo não encontrado: {caminho}"
+            f"Arquivo não encontrado: {caminho_fasta}"
         )
 
-    if caminho.suffix.lower() != ".ods":
-        raise ValueError(
-            "O arquivo precisa estar no formato .ods."
-        )
+    contagem = Counter()
+    total_cabecalhos = 0
 
-    # Lê todas as abas como texto.
-    abas = pd.read_excel(
-        caminho,
-        sheet_name=None,
-        engine="odf",
-        dtype=str
+    print("Iniciando leitura do FASTA...")
+
+    with open(caminho_fasta, "r", encoding="utf-8") as fasta:
+
+        for linha in fasta:
+
+            if linha.startswith(">"):
+
+                total_cabecalhos += 1
+
+                partes = linha.split("accn|", 1)
+
+                if len(partes) < 2:
+                    continue
+
+                accession = partes[1].split("|", 1)[0].strip()
+
+                if accession:
+                    contagem[accession] += 1
+
+                if total_cabecalhos % 100000 == 0:
+                    print(
+                        f"Cabeçalhos processados: {total_cabecalhos}"
+                    )
+
+    print("\nLeitura concluída!")
+    print(f"Total de cabeçalhos: {total_cabecalhos}")
+    print(f"Accessions diferentes: {len(contagem)}")
+
+    return contagem
+
+
+def salvar_resultado(contagem, caminho_saida):
+
+    print("\nSalvando resultado...")
+
+    with open(caminho_saida, "w", encoding="utf-8") as arquivo:
+
+        arquivo.write("accession\tquantidade\n")
+
+        for accession, quantidade in sorted(contagem.items(), key=lambda item: item[1], reverse=True):
+
+            arquivo.write(f"{accession}\t{quantidade}\n")
+
+    print(f"Arquivo salvo em: {caminho_saida}")
+
+
+def main():
+
+    parser = argparse.ArgumentParser(
+        description="Conta quantas vezes cada accession aparece em um FASTA."
     )
 
-    # Verifica as abas necessárias.
-    for nome in ["cepas com vírus", "original", "main"]:
-        if nome not in abas:
-            raise ValueError(
-                f"A aba '{nome}' não foi encontrada."
-            )
-
-    virus = abas["cepas com vírus"].copy()
-    original = abas["original"].copy()
-    main = abas["main"].copy()
-
-    # Remove espaços extras dos nomes das colunas.
-    virus.columns = virus.columns.str.strip()
-    original.columns = original.columns.str.strip()
-    main.columns = main.columns.str.strip()
-
-    # Verifica as colunas necessárias.
-    colunas_virus = [
-        "Genome ID",
-        "Quantidade de vezes"
-    ]
-
-    colunas_original = [
-        "Genome ID",
-        "Strain"
-    ]
-
-    colunas_main = [
-        "Strain",
-        "accession"
-    ]
-
-    for coluna in colunas_virus:
-        if coluna not in virus.columns:
-            raise ValueError(
-                f"Coluna '{coluna}' ausente na aba "
-                "'cepas com vírus'."
-            )
-
-    for coluna in colunas_original:
-        if coluna not in original.columns:
-            raise ValueError(
-                f"Coluna '{coluna}' ausente na aba 'original'."
-            )
-
-    for coluna in colunas_main:
-        if coluna not in main.columns:
-            raise ValueError(
-                f"Coluna '{coluna}' ausente na aba 'main'."
-            )
-
-    # Normaliza os Genome IDs e os nomes das cepas.
-    virus["_id_busca"] = virus["Genome ID"].map(normalizar)
-
-    original["_id_busca"] = original["Genome ID"].map(
-        normalizar
+    parser.add_argument(
+        "fasta",
+        help="Caminho do arquivo FASTA."
     )
 
-    original["_Strain_busca"] = original["Strain"].map(
-        normalizar
+    parser.add_argument(
+        "-o", "--output",
+        default="contagem_accessions.tab",
+        help="Nome do arquivo TAB de saída."
     )
 
-    main["_Strain_busca"] = main["Strain"].map(
-        normalizar
-    )
+    args = parser.parse_args()
 
-    # Recupera o Strain correspondente a cada Genome ID.
-    dados_Strain = original[
-        ["_id_busca", "_Strain_busca"]
-    ].dropna(subset=["_id_busca"])
+    contagem = contar_accessions(args.fasta)
 
-    # Evita duplicar os registros da tabela de consulta.
-    dados_Strain = dados_Strain.drop_duplicates(
-        subset="_id_busca",
-        keep="first"
-    )
+    salvar_resultado(contagem, args.output)
 
-    mapa_Strain = dados_Strain.set
+
+if __name__ == "__main__":
+    main()

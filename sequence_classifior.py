@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
 """
-Consulta os accessions da coluna 'accession' da aba 'tudo' de uma planilha ODS
-no NCBI e grava somente os resultados em um arquivo TSV.
-
-Uso:
-    python classificar_genbank_ncbi.py "planilha.ods"
-
-Dependências:
-    pip install pandas odfpy requests biopython
+#na linha de comando
+python classificar_genbank_ncbi <planilha>.ods
 """
 import sys
 import time

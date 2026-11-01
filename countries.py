@@ -1,3 +1,8 @@
+"""
+#na linha de comando
+python3 countries <planilha>.ods
+"""
+
 import pandas as pd
 import argparse
 from pathlib import Path

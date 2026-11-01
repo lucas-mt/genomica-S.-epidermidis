@@ -1,3 +1,7 @@
+"""
+#na linha de comando
+python3 fasta_dividor <planilha>.ods <arq>.fasta 
+"""
 import argparse
 import re
 import sys

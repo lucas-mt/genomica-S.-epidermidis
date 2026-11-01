@@ -1,3 +1,8 @@
+"""
+#na linha de comando
+python3 sequence_separator <planilha>.ods
+"""
+
 import pandas as pd
 import sys
 import os

@@ -1,3 +1,8 @@
+"""
+#na linha de comando
+python3 entrez <planilha>.ods
+"""
+
 import argparse
 import pandas as pd
 import time
