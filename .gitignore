@@ -1,0 +1,15 @@
+# Diretorios de genomas
+/cromossomos/
+/plasmídeos/
+/__pycache__/
+
+# Arquivos FASTA
+/genoma.fasta
+*.fasta
+*.fa
+*.fna
+*.fas
+
+# Resultados e planilhas
+/resultados parciais.txt
+/s_epidermidis.ods
